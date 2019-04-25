@@ -1,4 +1,8 @@
+// Testing include
 #include "gtest/gtest.h"
+
+// File to test
+#include "mdconverter.hpp"
 
 TEST(Simple, Nothing)
 {

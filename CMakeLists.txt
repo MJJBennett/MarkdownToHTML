@@ -7,4 +7,5 @@ add_executable(MarkdownToHTML app.cpp)
 
 target_include_directories(MarkdownToHTML PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>")
 
+enable_testing()
 add_subdirectory(test)

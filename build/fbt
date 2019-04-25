@@ -1,0 +1,7 @@
+#!/bin/bash
+
+ccmake
+
+make all
+
+./test/MarkdownTesting

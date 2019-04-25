@@ -12,8 +12,9 @@ add_subdirectory(${GOOGLETEST_DIR}
                  EXCLUDE_FROM_ALL)
 
 add_executable(MarkdownTesting Test_Basic.cpp)
+target_include_directories(MarkdownTesting PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include>")
 target_link_libraries(MarkdownTesting gtest_main)
-add_test(NAME Simple COMMAND Nothing)
+add_test(NAME Simple COMMAND MarkdownTesting)
 
 else()
 message("Warning: Could not build tests. Reason: Google Test directory not found.")

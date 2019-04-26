@@ -44,6 +44,12 @@ template <typename T>
 struct Marker
 {
     using iterator = typename T::const_iterator;
+    using type     = T;
+
+    bool operator==(const Marker<T>& other) const noexcept
+    {
+        return (other.itr_ == itr_ && other.mark_ == mark_);
+    }
 
     iterator itr_;
     Mark mark_;
@@ -60,7 +66,7 @@ struct MDHandler
         }
         switch (mark)
         {
-            case Mark::Preformatted: return "<pre>";
+            case Mark::Preformatted: return "<pre><code>";
             default: return "<undefined>";
         }
     }
@@ -72,7 +78,7 @@ struct MDHandler
         }
         switch (mark)
         {
-            case Mark::Preformatted: return "</pre>";
+            case Mark::Preformatted: return "</code></pre>";
             default: return "</undefined>";
         }
     }
@@ -215,3 +221,29 @@ auto convert(const T& md_text, const H& handler) -> T
 }
 
 }  // namespace mdc
+
+/* Utility Functions */
+
+namespace mdc::util
+{
+std::string markToString(mdc::Mark mark)
+{
+    switch (mark)
+    {
+        case mdc::Mark::Header1: return "Header1";
+        case mdc::Mark::Header2: return "Header2";
+        case mdc::Mark::Header3: return "Header3";
+        case mdc::Mark::Header4: return "Header4";
+        case mdc::Mark::Header5: return "Header5";
+        case mdc::Mark::Header6: return "Header6";
+        case mdc::Mark::List: return "List";
+        case mdc::Mark::Italics: return "Italics";
+        case mdc::Mark::Bold: return "Bold";
+        case mdc::Mark::Preformatted: return "Preformatted";
+        case mdc::Mark::Start: return "Start";
+
+        default: return "Undefined";
+    }
+}
+}  // namespace mdc::util
+

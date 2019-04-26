@@ -1,8 +1,4 @@
-// Testing include
-#include "gtest/gtest.h"
-
-// File to test
-#include "mdconverter.hpp"
+#include "Test_Helpers.hpp"
 
 TEST(BasicUtilities, remove_codeblock1)
 {
@@ -44,4 +40,17 @@ TEST(BasicUtilities, remove_codeblock1)
     T codestring3_result(itr, codestring3.cend());
 
     EXPECT_EQ(codestring3_result, "this is your average string, nothing special");
+}
+
+TEST(BasicMarkers, get_markers)
+{
+    using T = std::string;
+    using IT = T::const_iterator;
+
+    T str1("testing string");
+
+    mdc::Marker<T> lhs{str1.begin(), mdc::Mark::Bold};
+    mdc::Marker<T> rhs{str1.begin(), mdc::Mark::Italics};
+
+    EXPECT_TRUE(IsEqual<T>(lhs, rhs));
 }

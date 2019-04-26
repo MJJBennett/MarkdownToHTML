@@ -11,7 +11,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(${GOOGLETEST_DIR}
                  EXCLUDE_FROM_ALL)
 
-add_executable(MarkdownTesting Test_Basic.cpp)
+add_executable(MarkdownTesting Test_Basic.cpp Test_Helpers.hpp)
 target_include_directories(MarkdownTesting PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include>")
 target_link_libraries(MarkdownTesting gtest_main)
 add_test(NAME Simple COMMAND MarkdownTesting)

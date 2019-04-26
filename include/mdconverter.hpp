@@ -133,9 +133,21 @@ auto convert_collection(const C<T>& md_text, const H& handler) -> decltype(C<T>(
 }
 
 template <typename T>
+auto next_is(T& itr, const T& end, char id) -> bool
+{
+    return itr + 1 != end && *(itr + 1) == id;
+}
+
+template <typename T>
 auto is_whitespace(T& itr) -> bool
 {
     return *itr == '\t' || std::isspace(*itr);
+}
+
+template <typename T>
+auto next_is_whitespace(T& itr, const T& end) -> bool
+{
+    return itr + 1 != end && is_whitespace(itr + 1);
 }
 
 template <typename T>
@@ -150,7 +162,8 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
     unsigned short header = 0;
     std::vector<Marker<T>> markers;
 
-    auto itr = md_text.begin();
+    auto itr       = md_text.begin();
+    const auto end = md_text.end();
 
     // Is the line a header?
     while (*itr == '#')
@@ -193,6 +206,37 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
     {
         // We can actually insert a normal start
         markers.push_back({md_text.begin(), Mark::Start});
+    }
+
+    // At this point, we have at least one leading marker (Mark::Start, Mark::List,
+    // Mark::Header...) Now we need to enumerate the rest of the markers Necessary to support:
+    // - Italics
+    // - Bold
+    // - Link (TODO - How to deal with these?)
+
+    bool in_bold{false};
+    bool in_italics{false};
+    while (itr != end)
+    {
+        if (!in_bold && start_bold(itr))
+        {
+            // We found ...**c
+            // Advance
+        }
+        if (!in_bold && start_bold(itr))
+        {
+            // We found ...**c
+            // Advance
+        }
+        if (*itr == '*')
+        {
+            if (next_is(itr, end, '*') && next_is_whitespace(itr + 1, end))
+            {
+                if (in_bold)
+                {
+                }
+            }
+        }
     }
 
     return markers;

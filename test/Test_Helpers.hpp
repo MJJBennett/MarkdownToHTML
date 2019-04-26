@@ -4,11 +4,14 @@
 // File to test
 #include "mdconverter.hpp"
 
-template<typename T>
+template <typename T>
 ::testing::AssertionResult IsEqual(mdc::Marker<T> lhs, mdc::Marker<T> rhs)
 {
     // If they're equal, no need to be fancy
     if (lhs == rhs) return ::testing::AssertionSuccess();
     // If they aren't equal, print additional information
-    return ::testing::AssertionFailure() << "\n\tLeft Mark: " << mdc::util::markToString(lhs.mark_) << "\n\tRight Mark: " << mdc::util::markToString(rhs.mark_);
+    return ::testing::AssertionFailure()
+           << "\n\tLeft Mark: " << mdc::util::markToString(lhs.mark_)
+           << "\n\tRight Mark: " << mdc::util::markToString(rhs.mark_)
+           << "\n\tLeft Character: " << *lhs.itr_ << "\n\tRight Character: " << *rhs.itr_ << "\n";
 }

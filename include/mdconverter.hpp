@@ -133,25 +133,25 @@ auto convert_collection(const C<T>& md_text, const H& handler) -> decltype(C<T>(
 }
 
 template <typename T>
-auto next_is(T& itr, const T& end, char id) -> bool
+auto next_is(const T& itr, const T& end, char id) -> bool
 {
     return itr + 1 != end && *(itr + 1) == id;
 }
 
 template <typename T>
-auto is_whitespace(T& itr) -> bool
+auto is_whitespace(const T& itr) -> bool
 {
     return *itr == '\t' || std::isspace(*itr);
 }
 
 template <typename T>
-auto next_is_whitespace(T& itr, const T& end) -> bool
+auto next_is_whitespace(const T& itr, const T& end) -> bool
 {
     return itr + 1 != end && is_whitespace(itr + 1);
 }
 
 template <typename T>
-auto is_list(T& itr) -> bool
+auto is_list(const T& itr) -> bool
 {
     return false;  // Unimplemented
 }
@@ -218,12 +218,12 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
     bool in_italics{false};
     while (itr != end)
     {
-        if (!in_bold && start_bold(itr))
+//        if (!in_bold && start_bold(itr))
         {
             // We found ...**c
             // Advance
         }
-        if (!in_bold && start_bold(itr))
+//        if (!in_bold && start_bold(itr))
         {
             // We found ...**c
             // Advance
@@ -237,6 +237,8 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
                 }
             }
         }
+
+        itr++;
     }
 
     return markers;

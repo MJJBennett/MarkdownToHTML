@@ -133,6 +133,18 @@ auto convert_collection(const C<T>& md_text, const H& handler) -> decltype(C<T>(
 }
 
 template <typename T>
+auto is_whitespace(T& itr) -> bool
+{
+    return *itr == '\t' || std::isspace(*itr);
+}
+
+template <typename T>
+auto is_list(T& itr) -> bool
+{
+    return false;  // Unimplemented
+}
+
+template <typename T>
 auto get_markers(const T& md_text) -> std::vector<Marker<T>>
 {
     unsigned short header = 0;
@@ -148,7 +160,7 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
     }
 
     // If it's a proper header
-    if (header && std::isspace(*itr) && header < 7)
+    if (header && is_whitespace(itr) && header < 7)
     {
         // Advance past the space
         itr++;
@@ -166,7 +178,16 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
             return markers;
         }
 
-        // TODO - Handle lists here.
+        if (is_list(itr))
+        {
+            // Do list logic here
+        }
+        else
+        {
+            // If it isn't a list, a preformatted block, or a header
+            // We might have removed leading whitespace above - deal with that now
+            markers.push_back({itr, Mark::Start});
+        }
     }
     else
     {

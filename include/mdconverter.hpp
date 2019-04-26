@@ -1,20 +1,19 @@
-#include <vector>
-#include <string>
-#include <optional>
 #include <iostream>
+#include <optional>
 #include <stack>
+#include <string>
+#include <vector>
 
 namespace mdc
 {
-
 namespace internal
 {
-    template<typename T>
-    struct DeduceType
-    {
-        using error_ = typename T::__error_;
-    };
-}
+template <typename T>
+struct DeduceType
+{
+    using error_ = typename T::__error_;
+};
+}  // namespace internal
 
 /* Type definitions */
 
@@ -36,21 +35,21 @@ enum class Mark : unsigned short
 class State : public std::stack<Mark>
 {
     using base = std::stack<Mark>;
-public:
 
+public:
     using base::base;
 };
 
-template<typename T>
+template <typename T>
 struct Marker
 {
     using iterator = typename T::const_iterator;
 
     iterator itr_;
-    Mark mark_;  
+    Mark mark_;
 };
 
-template<typename T>
+template <typename T>
 struct MDHandler
 {
     static constexpr T start(Mark mark)
@@ -59,7 +58,7 @@ struct MDHandler
         {
             return header_start(static_cast<unsigned short>(mark));
         }
-        switch(mark)
+        switch (mark)
         {
             case Mark::Preformatted: return "<pre>";
             default: return "<undefined>";
@@ -71,37 +70,39 @@ struct MDHandler
         {
             return header_end(static_cast<unsigned short>(mark));
         }
-        switch(mark)
+        switch (mark)
         {
             case Mark::Preformatted: return "</pre>";
             default: return "</undefined>";
         }
     }
-    static constexpr T header_start(unsigned short i) 
-    { 
+    static constexpr T header_start(unsigned short i)
+    {
         T str("<h.>");
         str[2] = '0' + i;
-        return str; 
+        return str;
     }
-    static constexpr T header_end(unsigned short i) 
-    { 
+    static constexpr T header_end(unsigned short i)
+    {
         T str("</h.>");
         str[3] = '0' + i;
-        return str; 
+        return str;
     }
 };
 
 /* Function Definitions */
 
 constexpr static unsigned short tabwidth = 4;
-template<typename T>
+template <typename T>
 auto remove_codeblock(T& itr) -> bool
 {
     unsigned short length = 0;
     while (*itr == '\t' || *itr == ' ')
     {
-        if (*itr == '\t') length += tabwidth;
-        else length += 1;
+        if (*itr == '\t')
+            length += tabwidth;
+        else
+            length += 1;
         itr++;
 
         // If we found the start of a codeblock, return true
@@ -110,7 +111,7 @@ auto remove_codeblock(T& itr) -> bool
     return false;
 }
 
-template<template <typename> class C, typename T, typename H>
+template <template <typename> class C, typename T, typename H>
 auto convert_collection(const C<T>& md_text, const H& handler) -> decltype(C<T>())
 {
     C<T> html_text;
@@ -125,12 +126,12 @@ auto convert_collection(const C<T>& md_text, const H& handler) -> decltype(C<T>(
     return html_text;
 }
 
-template<typename T>
+template <typename T>
 auto get_markers(const T& md_text) -> std::vector<Marker<T>>
 {
     unsigned short header = 0;
     std::vector<Marker<T>> markers;
-    
+
     auto itr = md_text.begin();
 
     // Is the line a header?
@@ -148,9 +149,9 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
         // Now we can use this as our 'start'
         markers.push_back({itr, static_cast<Mark>(header)});
     }
-    else if (header == 0) 
+    else if (header == 0)
     {
-        // We haven't parsed anything yet. 
+        // We haven't parsed anything yet.
         // Could still be a list or preformatted code block
         if (remove_codeblock(itr))
         {
@@ -158,7 +159,7 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
             markers.push_back({itr, Mark::Preformatted});
             return markers;
         }
-        
+
         // TODO - Handle lists here.
     }
     else
@@ -170,7 +171,7 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
     return markers;
 }
 
-template<typename T, typename H>
+template <typename T, typename H>
 auto resolve_all(const H& handler, State& state) -> T
 {
     T ret;
@@ -182,7 +183,7 @@ auto resolve_all(const H& handler, State& state) -> T
     return ret;
 }
 
-template<typename T, typename H>
+template <typename T, typename H>
 auto convert(const T& md_text, const H& handler, State& state) -> T
 {
     T html_text;
@@ -203,15 +204,14 @@ auto convert(const T& md_text, const H& handler, State& state) -> T
         // We can copy in between
     }
 
-
     return html_text;
 }
 
-template<typename T, typename H>
+template <typename T, typename H>
 auto convert(const T& md_text, const H& handler) -> T
 {
     State state;
     return convert(md_text, handler, state);
 }
 
-}
+}  // namespace mdc

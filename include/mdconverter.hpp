@@ -28,6 +28,7 @@ enum class Mark : unsigned short
     List,
     Italics,
     Bold,
+    BoldItalics,
     Preformatted,
     Start,
 };
@@ -144,6 +145,20 @@ auto is_whitespace(const T& itr) -> bool
     return *itr == '\t' || std::isspace(*itr);
 }
 
+/**
+ * Returns:
+ *  0 if nothing
+ *  1 if *
+ *  2 if **
+ *  3 if ***
+ */
+template <typename T>
+auto is_bold_and_italics(const T& itr, const T& end) -> int
+{
+    return ((*itr == '*') ? (1 + (next_is(itr, end, '*') ? (1 + next_is(itr + 1, end, '*')) : 0))
+                          : 0);
+}
+
 template <typename T>
 auto next_is_whitespace(const T& itr, const T& end) -> bool
 {
@@ -213,29 +228,37 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
     // - Italics
     // - Bold
     // - Link (TODO - How to deal with these?)
+    // Note: According to the spec, markdown can be easily be multiline, so we have to just mark
+    // the location of characters
+    // Nothing else we can do Links can be multiline but do have a guaranteed ]( portion (no
+    // newline possible) - appears that link body cannot have spaces
+    // Consider:
+    /*      [this
+     *      *is*
+     *      a](https://*this*link)
+     */
+    // This should parse to:
+    // <link @ https://*this*link>this<i>is</i>a</link>
+    // May want this function to be stateful to avoid inserting at every [ character?
+    // Probably not a big deal.
+    // [  -> LinkStart
+    // ]( -> LinkJoin
+    // ) -> LinkEnd
+    // RE: Bold/Italics: Apparently resolution is backwards, e.g.
+    /*      ***this
+     *      this ***this*** this
+     */
+    // should leave the first three * alone, not the last three
 
-    bool in_bold{false};
-    bool in_italics{false};
     while (itr != end)
     {
-//        if (!in_bold && start_bold(itr))
+        // Scout first
+        switch (is_bold_and_italics(itr, end))
         {
-            // We found ...**c
-            // Advance
-        }
-//        if (!in_bold && start_bold(itr))
-        {
-            // We found ...**c
-            // Advance
-        }
-        if (*itr == '*')
-        {
-            if (next_is(itr, end, '*') && next_is_whitespace(itr + 1, end))
-            {
-                if (in_bold)
-                {
-                }
-            }
+            case 1: markers.push_back({itr, Mark::Italics}); break;
+            case 2: markers.push_back({itr, Mark::Bold}); break;
+            case 3: markers.push_back({itr, Mark::BoldItalics}); break;
+            default: break;
         }
 
         itr++;
@@ -306,6 +329,7 @@ std::string markToString(mdc::Mark mark)
         case mdc::Mark::List: return "List";
         case mdc::Mark::Italics: return "Italics";
         case mdc::Mark::Bold: return "Bold";
+        case mdc::Mark::BoldItalics: return "BoldItalics";
         case mdc::Mark::Preformatted: return "Preformatted";
         case mdc::Mark::Start: return "Start";
 

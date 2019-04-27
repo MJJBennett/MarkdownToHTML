@@ -113,3 +113,21 @@ TEST(BasicMarkersBegin, get_markers)
     EXPECT_EQ(markers.size(), 1);
     EXPECT_TRUE(IsEqual<T>(markers.at(0), {str3.begin() + 3, mdc::Mark::Start}));
 }
+
+TEST(BasicUtilities, is_bold_and_italics)
+{
+    using T  = std::string;
+    using IT = T::const_iterator;
+
+    T str("test***test");
+    EXPECT_EQ(mdc::is_bold_and_italics(str.begin() + 4, str.end()), 3);
+    EXPECT_EQ(mdc::is_bold_and_italics(str.begin() + 5, str.end()), 2);
+    EXPECT_EQ(mdc::is_bold_and_italics(str.begin() + 6, str.end()), 1);
+    EXPECT_EQ(mdc::is_bold_and_italics(str.begin() + 7, str.end()), 0);
+
+    str = "a";
+    EXPECT_EQ(mdc::is_bold_and_italics(str.begin(), str.end()), 0);
+
+    str = "*";
+    EXPECT_EQ(mdc::is_bold_and_italics(str.begin(), str.end()), 1);
+}

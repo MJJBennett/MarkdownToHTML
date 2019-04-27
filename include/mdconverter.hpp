@@ -256,8 +256,14 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
         switch (is_bold_and_italics(itr, end))
         {
             case 1: markers.push_back({itr, Mark::Italics}); break;
-            case 2: markers.push_back({itr, Mark::Bold}); break;
-            case 3: markers.push_back({itr, Mark::BoldItalics}); break;
+            case 2:
+                markers.push_back({itr, Mark::Bold});
+                itr++;
+                break;
+            case 3:
+                markers.push_back({itr, Mark::BoldItalics});
+                itr += 2;
+                break;
             default: break;
         }
 

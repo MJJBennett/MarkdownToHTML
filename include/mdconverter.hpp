@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <optional>
 #include <stack>
@@ -34,6 +35,12 @@ enum class Mark : unsigned short
     Start,
     List,
 };
+
+Mark header_from_int(const unsigned short num)
+{
+    assert(num > 0 && num < 7);
+    return static_cast<Mark>(num);
+}
 
 class State : public std::stack<Mark>
 {
@@ -124,8 +131,8 @@ constexpr static unsigned short tabwidth = 4;
 template <typename T>
 auto remove_codeblock(T& itr, const T& end, const unsigned int allowed_spaces = 0) -> bool
 {
-    const unsigned int spaces_to_codeblock = tabwidth + allowed_spaces; 
-    unsigned short length = 0;
+    const unsigned int spaces_to_codeblock = tabwidth + allowed_spaces;
+    unsigned short length                  = 0;
     while (itr != end && (*itr == '\t' || *itr == ' '))
     {
         if (*itr == '\t')
@@ -198,7 +205,11 @@ template <typename T>
 auto remove_header(T& itr, const T& end) -> int
 {
     int count = 0;
-    while (itr != end && *itr == '#') count++;
+    while (itr != end && *itr == '#')
+    {
+        count++;
+        itr++;
+    }
     return count;
 }
 
@@ -220,65 +231,28 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
     const auto end = md_text.end();
 
     // First remove leading whitespace
-    if (remove_codeblock(itr))
+    if (remove_codeblock(itr, end))
     {
         // TODO - Handle newlines within the text here.
         markers.push_back({itr, Mark::Preformatted});
         return markers;
     }
 
-    if (const int header = remove_header(itr); header > 0)
+    if (const int header = remove_header(itr, end); header > 0)
     {
-        markers.push_back({itr, Mark::Header(header)});
+        markers.push_back({itr, header_from_int(header)});
     }
 
-    // Is the line a header?
-    // Note: Must check for end. It's undefined behaviour to dereference end or past it.
-    while (itr != end && *itr == '#')
+    if (markers.empty())
     {
-        header++;
-        itr++;
-    }
-
-    // If it's a proper header
-    if (header && is_whitespace(itr) && header < 7)
-    {
-        // Advance past the space
-        itr++;
-        // Now we can use this as our 'start'
-        markers.push_back({itr, static_cast<Mark>(header)});
-    }
-    else if (header == 0)
-    {
-        // We haven't parsed anything yet.
-        // Could still be a list or preformatted code block
-        if (remove_codeblock(itr))
-        {
-            // This is a pre/code block. Do no more formatting.
-        }
-
-        if (is_list(itr))
-        {
-            // Do list logic here
-        }
-        else
-        {
-            // If it isn't a list, a preformatted block, or a header
-            // We might have removed leading whitespace above - deal with that now
-            markers.push_back({itr, Mark::Start});
-        }
-    }
-    else
-    {
-        // We can actually insert a normal start
-        markers.push_back({md_text.begin(), Mark::Start});
+        markers.push_back({itr, Mark::Start});
     }
 
     // At this point, we have at least one leading marker (Mark::Start, Mark::List,
     // Mark::Header...) Now we need to enumerate the rest of the markers Necessary to support:
     // - Italics
     // - Bold
-    // - Link (TODO - How to deal with these?)
+    // - Link (TODO - How to deal with these?) - Not as big a deal with stiched lines
     // Note: According to the spec, markdown can be easily be multiline, so we have to just mark
     // the location of characters
     // Nothing else we can do Links can be multiline but do have a guaranteed ]( portion (no
@@ -324,38 +298,34 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
     return markers;
 }
 
-template <typename T, typename H>
-auto resolve_all(const H& handler, State& state) -> T
+int offset(const Mark& m)
 {
-    T ret;
-    while (!state.empty())
+    switch (m)
     {
-        ret += handler.end(state.top());
-        state.pop();
+        case Mark::Bold: return 2;
+        case Mark::Start: return 0;
+        default: return 1;
     }
-    return ret;
 }
 
 template <typename T, typename H>
 auto convert(const T& md_text, const H& handler, State& state) -> T
 {
     T html_text;
-    if (is_preformatted(md_text, state.
 
     auto markers = get_markers(md_text);
 
-    // Before we do all of them, check for a preformatted block
-    if (markers.front().mark_ == Mark::Preformatted)
-    {
-        html_text += resolve_all<T>(handler, state);
-        html_text += T(markers.front().itr_, md_text.end());
-        return html_text;
-    }
+    auto itr       = markers.begin();
+    const auto end = markers.end();
 
-    for (auto&& marker : markers)
+    while (itr != end)
     {
-        // Markers is a list of all markers where we need to start/stop the string
-        // We can copy in between
+        // Add the marker
+        html_text += handler.start((*itr).mark_);
+        // Now add the remaining text
+        html_text += T((*itr).itr_ + offset((*itr).mark_),
+                       (itr + 1 == end ? md_text.end() : (*(itr + 1)).itr_));
+        itr++;
     }
 
     return html_text;

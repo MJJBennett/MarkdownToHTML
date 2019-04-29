@@ -10,8 +10,9 @@ TEST(BasicUtilities, remove_codeblock1)
      */
     T codestring1("\t code block");
     IT itr = codestring1.begin();
+    IT end  = codestring1.end();
 
-    EXPECT_TRUE(mdc::remove_codeblock(itr));
+    EXPECT_TRUE(mdc::remove_codeblock(itr, end));
 
     T codestring1_result(itr, codestring1.cend());
 
@@ -22,8 +23,9 @@ TEST(BasicUtilities, remove_codeblock1)
      */
     T codestring2(" \tcode block\t\t    \t");
     itr = codestring2.begin();
+    end  = codestring2.end();
 
-    EXPECT_TRUE(mdc::remove_codeblock(itr));
+    EXPECT_TRUE(mdc::remove_codeblock(itr, end));
 
     T codestring2_result(itr, codestring2.cend());
 
@@ -34,8 +36,9 @@ TEST(BasicUtilities, remove_codeblock1)
      */
     T codestring3("   this is your average string, nothing special");
     itr = codestring3.begin();
+    end  = codestring3.end();
 
-    EXPECT_FALSE(mdc::remove_codeblock(itr));
+    EXPECT_FALSE(mdc::remove_codeblock(itr, end));
 
     T codestring3_result(itr, codestring3.cend());
 

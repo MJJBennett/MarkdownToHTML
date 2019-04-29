@@ -114,6 +114,17 @@ TEST(BasicMarkersBegin, get_markers)
     EXPECT_TRUE(IsEqual<T>(markers.at(0), {str3.begin() + 3, mdc::Mark::Start}));
 }
 
+TEST(BasicMarkersHeaders, get_markers)
+{
+    using T  = std::string;
+    using IT = T::const_iterator;
+
+    T hs("###");
+    auto markers = mdc::get_markers(hs);
+
+    EXPECT_TRUE(IsEqual<T>(markers.at(0), {hs.begin(), mdc::Mark::Header3}));
+}
+
 TEST(BasicUtilities, is_bold_and_italics)
 {
     using T  = std::string;

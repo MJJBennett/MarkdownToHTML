@@ -19,31 +19,44 @@ struct DeduceType
 
 enum class Mark : unsigned short
 {
+    // Headers go first to allow easy conversions
+    // between (int)Mark -> Header #
     Header1 = 1,
     Header2 = 2,
     Header3 = 3,
     Header4 = 4,
     Header5 = 5,
     Header6 = 6,
-    List,
     Italics,
     Bold,
-    BoldItalics,
+    BoldItalics,  // Used to avoid ordering issues
     Preformatted,
     Start,
+    List,
 };
 
 class State : public std::stack<Mark>
 {
+    /**
+     * State -
+     * Tracks certain 'stateful' markers.
+     */
+
     using base = std::stack<Mark>;
 
 public:
-    using base::base;
+    using base::base;  // Currently just std::stack wrapper
 };
 
 template <typename T>
 struct Marker
 {
+    /**
+     * Marker -
+     * Tracks the location of a 'special character'
+     * within a string.
+     */
+
     using iterator = typename T::const_iterator;
     using type     = T;
 
@@ -59,6 +72,11 @@ struct Marker
 template <typename T>
 struct MDHandler
 {
+    /**
+     * MDHandler -
+     * Used to generate the proper tags for a given marker.
+     */
+
     static constexpr T start(Mark mark)
     {
         if (static_cast<unsigned short>(mark) < 7 && static_cast<unsigned short>(mark) > 0)
@@ -68,6 +86,7 @@ struct MDHandler
         switch (mark)
         {
             case Mark::Preformatted: return "<pre><code>";
+            case Mark::Start: return "<p>";
             default: return "<undefined>";
         }
     }
@@ -80,9 +99,11 @@ struct MDHandler
         switch (mark)
         {
             case Mark::Preformatted: return "</code></pre>";
+            case Mark::Start: return "</p>";
             default: return "</undefined>";
         }
     }
+
     static constexpr T header_start(unsigned short i)
     {
         T str("<h.>");
@@ -101,10 +122,11 @@ struct MDHandler
 
 constexpr static unsigned short tabwidth = 4;
 template <typename T>
-auto remove_codeblock(T& itr) -> bool
+auto remove_codeblock(T& itr, const T& end, const unsigned int allowed_spaces = 0) -> bool
 {
+    const unsigned int spaces_to_codeblock = tabwidth + allowed_spaces; 
     unsigned short length = 0;
-    while (*itr == '\t' || *itr == ' ')
+    while (itr != end && (*itr == '\t' || *itr == ' '))
     {
         if (*itr == '\t')
             length += tabwidth;
@@ -113,7 +135,7 @@ auto remove_codeblock(T& itr) -> bool
         itr++;
 
         // If we found the start of a codeblock, return true
-        if (length >= tabwidth) return true;
+        if (length >= spaces_to_codeblock) return true;
     }
     return false;
 }
@@ -142,7 +164,8 @@ auto next_is(const T& itr, const T& end, char id) -> bool
 template <typename T>
 auto is_whitespace(const T& itr) -> bool
 {
-    return *itr == '\t' || std::isspace(*itr);
+    const auto c = *itr;
+    return c == '\t' || std::isspace(c) || c == '\n' || c == '\r';
 }
 
 /**
@@ -172,16 +195,46 @@ auto is_list(const T& itr) -> bool
 }
 
 template <typename T>
+auto remove_header(T& itr, const T& end) -> int
+{
+    int count = 0;
+    while (itr != end && *itr == '#') count++;
+    return count;
+}
+
+/**
+ * Returns a vector of Markers, iterators to breaks in the input string
+ * where tags need to be inserted.
+ * This function works only on a single line - stitch together multiple lines
+ * before calling this.
+ * Caveat: List metadata must somehow be embedded to support extra indentation.
+ */
+template <typename T>
 auto get_markers(const T& md_text) -> std::vector<Marker<T>>
 {
-    unsigned short header = 0;
+    // Store each mark in this vector.
     std::vector<Marker<T>> markers;
 
+    // Iterate through string character-by-character.
     auto itr       = md_text.begin();
     const auto end = md_text.end();
 
+    // First remove leading whitespace
+    if (remove_codeblock(itr))
+    {
+        // TODO - Handle newlines within the text here.
+        markers.push_back({itr, Mark::Preformatted});
+        return markers;
+    }
+
+    if (const int header = remove_header(itr); header > 0)
+    {
+        markers.push_back({itr, Mark::Header(header)});
+    }
+
     // Is the line a header?
-    while (*itr == '#')
+    // Note: Must check for end. It's undefined behaviour to dereference end or past it.
+    while (itr != end && *itr == '#')
     {
         header++;
         itr++;
@@ -202,8 +255,6 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
         if (remove_codeblock(itr))
         {
             // This is a pre/code block. Do no more formatting.
-            markers.push_back({itr, Mark::Preformatted});
-            return markers;
         }
 
         if (is_list(itr))
@@ -289,6 +340,7 @@ template <typename T, typename H>
 auto convert(const T& md_text, const H& handler, State& state) -> T
 {
     T html_text;
+    if (is_preformatted(md_text, state.
 
     auto markers = get_markers(md_text);
 

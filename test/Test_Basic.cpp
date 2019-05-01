@@ -125,7 +125,9 @@ TEST(BasicMarkersHeaders, get_markers)
     T hs("###");
     auto markers = mdc::get_markers(hs);
 
-    EXPECT_TRUE(IsEqual<T>(markers.at(0), {hs.begin(), mdc::Mark::Header3}));
+    // The Header3 mark should be an iterator to 'after' the marker characters
+    // In this case, hs.end()
+    EXPECT_TRUE(IsEqual<T>(markers.at(0), {hs.end(), mdc::Mark::Header3}));
 }
 
 TEST(BasicUtilities, is_bold_and_italics)

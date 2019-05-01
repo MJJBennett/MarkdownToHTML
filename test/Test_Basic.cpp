@@ -1,5 +1,18 @@
 #include "Test_Helpers.hpp"
 
+TEST(BasicUtilities, remove_header1)
+{
+    using T  = std::string;
+    using IT = T::const_iterator;
+
+    T codestring1("### code block");
+    IT itr = codestring1.begin();
+    IT end  = codestring1.end();
+
+    EXPECT_EQ(mdc::remove_header(itr, {end}), 3);
+    EXPECT_EQ(itr, codestring1.begin() + 4);
+}
+
 TEST(BasicUtilities, remove_codeblock1)
 {
     using T  = std::string;
@@ -101,7 +114,7 @@ TEST(BasicMarkersBegin, get_markers)
     markers = mdc::get_markers(str2);
 
     /* We should have one mark that is at 1 character in (to skip the tab) and it should indicate
-     * that this line is preformatted.
+     * that this is the start of the line.
      */
     EXPECT_EQ(markers.size(), 1);
     EXPECT_TRUE(IsEqual<T>(markers.at(0), {str2.begin() + 2, mdc::Mark::Start}));
@@ -111,7 +124,7 @@ TEST(BasicMarkersBegin, get_markers)
     markers = mdc::get_markers(str3);
 
     /* We should have one mark that is at 1 character in (to skip the tab) and it should indicate
-     * that this line is preformatted.
+     * that this is the start of the line.
      */
     EXPECT_EQ(markers.size(), 1);
     EXPECT_TRUE(IsEqual<T>(markers.at(0), {str3.begin() + 3, mdc::Mark::Start}));
@@ -128,6 +141,20 @@ TEST(BasicMarkersHeaders, get_markers)
     // The Header3 mark should be an iterator to 'after' the marker characters
     // In this case, hs.end()
     EXPECT_TRUE(IsEqual<T>(markers.at(0), {hs.end(), mdc::Mark::Header3}));
+    EXPECT_EQ(markers.size(), 1);
+
+    hs = "#### Text";
+    markers = mdc::get_markers(hs);
+
+    // The Header3 mark should be an iterator to 'after' the marker characters
+    EXPECT_TRUE(IsEqual<T>(markers.at(0), {hs.begin() + 5, mdc::Mark::Header4}));
+    EXPECT_EQ(markers.size(), 1);
+
+    hs = "####### Text";
+    markers = mdc::get_markers(hs);
+
+    EXPECT_TRUE(IsEqual<T>(markers.at(0), {hs.begin(), mdc::Mark::Start}));
+    EXPECT_EQ(markers.size(), 1);
 }
 
 TEST(BasicUtilities, is_bold_and_italics)

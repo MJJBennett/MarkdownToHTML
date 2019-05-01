@@ -16,6 +16,16 @@ struct DeduceType
 };
 }  // namespace internal
 
+namespace util
+{
+template <typename T>
+struct ItrGuard
+{
+    bool good(T itr) const noexcept { return itr != end; }
+    const T end;
+};
+}  // namespace util
+
 /* Type definitions */
 
 enum class Mark : unsigned short
@@ -202,14 +212,17 @@ auto is_list(const T& itr) -> bool
 }
 
 template <typename T>
-auto remove_header(T& itr, const T& end) -> int
+auto remove_header(T& itr, const util::ItrGuard<T>& end) -> int
 {
     int count = 0;
-    while (itr != end && *itr == '#')
+    while (end.good(itr + count) && *(itr + count) == '#')
     {
         count++;
-        itr++;
+        if (count > 6) return 0;
     }
+
+    if (end.good(itr + count) && !is_whitespace(itr + count)) return 0;
+    itr += count + end.good(itr + count);
     return count;
 }
 
@@ -238,7 +251,7 @@ auto get_markers(const T& md_text) -> std::vector<Marker<T>>
         return markers;
     }
 
-    if (const int header = remove_header(itr, end); header > 0)
+    if (const int header = remove_header(itr, {end}); header > 0)
     {
         markers.push_back({itr, header_from_int(header)});
     }
